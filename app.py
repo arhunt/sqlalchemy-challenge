@@ -133,26 +133,23 @@ def start_stats(start):
 
     session = Session(engine)
 
-    # Order temps to find min
-    mintempfind = session.query(msmnt.tobs).\
-        filter(msmnt.date >= start).\
-        order_by(msmnt.tobs).first()
-    # Order temps desc to find max
-    maxtempfind = session.query(msmnt.tobs).\
-        filter(msmnt.date >= start).\
-        order_by(msmnt.tobs.desc()).first()
-    # Average
-    avgtempfind = session.query(func.avg(msmnt.tobs)).\
+    # Create query to find stats per date
+    statsdates = session.query(func.min(msmnt.tobs),\
+        func.avg(msmnt.tobs),\
+        func.max(msmnt.tobs)).\
         filter(msmnt.date >= start)
-    # Create dictionary with data
-    startdatedict = {"TMIN":mintempfind[0],\
-        "TAVG":round(avgtempfind[0][0],1),\
-        "TMAX":maxtempfind[0]}
+    
+    # Create values to put into dictionary
+    for record in statsdates:
+        sdmin = record[0]
+        sdavg = round(record[1],1)
+        sdmax = record[2]
+    statsdatesdict = {"TMIN":sdmin,"TAVG":sdavg,"TMAX":sdmax}
 
     session.close()
 
     # Return json
-    return jsonify(startdatedict)
+    return jsonify(statsdatesdict)
 
 
 @app.route("/api/v1.0/<start>/<end>")
@@ -162,26 +159,23 @@ def dates_stats(start, end):
 
     session = Session(engine)
 
-    # Order temps to find min
-    mintempfind = session.query(msmnt.tobs).\
-        filter(and_(msmnt.date >= start), msmnt.date <= end).\
-        order_by(msmnt.tobs).first()
-    # Order temps desc to find max
-    maxtempfind = session.query(msmnt.tobs).\
-        filter(and_(msmnt.date >= start), msmnt.date <= end).\
-        order_by(msmnt.tobs.desc()).first()
-    # Average
-    avgtempfind = session.query(func.avg(msmnt.tobs)).\
-        filter(and_(msmnt.date > start, msmnt.date <= end))
-    # Create dictionary with data
-    twodatesdict = {"TMIN":mintempfind[0],\
-        "TAVG":round(avgtempfind[0][0],1),\
-        "TMAX":maxtempfind[0]}
+    # Create query to find stats per dates
+    statsdates = session.query(func.min(msmnt.tobs),\
+        func.avg(msmnt.tobs),\
+        func.max(msmnt.tobs)).\
+        filter(and_(msmnt.date >= start, msmnt.date <= end))
+    
+    # Create values to put into dictionary
+    for record in statsdates:
+        sdmin = record[0]
+        sdavg = round(record[1],1)
+        sdmax = record[2]
+    statsdatesdict = {"TMIN":sdmin,"TAVG":sdavg,"TMAX":sdmax}
 
     session.close()
 
     # Return json
-    return jsonify(twodatesdict)
+    return jsonify(statsdatesdict)
 
 # End
 if __name__ == '__main__':
